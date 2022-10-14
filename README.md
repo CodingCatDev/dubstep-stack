@@ -1,6 +1,6 @@
-# Remix K-pop Stack
+# Remix Dubstep Stack
 
-![k-pop site image](https://res.cloudinary.com/dzkoxrsdj/image/upload/v1648844684/CleanShot_2022-04-01_at_16.23.40_2x_oo3ppe.jpg)
+![Dubstep-stack](https://user-images.githubusercontent.com/3102249/195820995-f6c29feb-4610-4731-b21d-ad45358e4aad.png)
 
 Deployed Site: [kpop-stack.netlify.app](https://kpop-stack.netlify.app)
 
