@@ -1,56 +1,21 @@
-import bcrypt from "bcryptjs";
-import { createClient } from "@supabase/supabase-js";
-import invariant from "tiny-invariant";
+import type { Models } from "node-appwrite";
+import { ID, Query } from "node-appwrite";
+import {users, databases, appwriteDb} from "./config.server";
 
-export type User = { id: string; email: string };
-
-// Abstract this away
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-
-invariant(
-  supabaseUrl,
-  "SUPABASE_URL must be set in your environment variables."
-);
-invariant(
-  supabaseAnonKey,
-  "SUPABASE_ANON_KEY must be set in your environment variables."
-);
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export interface User extends Models.User<Models.Preferences>{}
 
 export async function createUser(email: string, password: string) {
-  const { user } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-
-  // get the user profile after created
-  const profile = await getProfileByEmail(user?.email);
-
-  return profile;
+  const user = await users.create(ID.unique(), email, undefined, password);
+  return user;
 }
 
 export async function getProfileById(id: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("email, id")
-    .eq("id", id)
-    .single();
-
-  if (error) return null;
-  if (data) return { id: data.id, email: data.email };
-}
-
-export async function getProfileByEmail(email?: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("email, id")
-    .eq("email", email)
-    .single();
-
-  if (error) return null;
-  if (data) return data;
+  try {
+    const data = await users.getPrefs(id);
+    return data;
+  } catch (error) {
+    if (error) return null;
+  }
 }
 
 export async function verifyLogin(email: string, password: string) {

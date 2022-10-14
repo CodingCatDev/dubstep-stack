@@ -1,0 +1,46 @@
+{
+    "projectId": "dubstep-stack",
+    "projectName": "dubstep-stack",
+    "collections": [
+        {
+            "$id": "notes",
+            "$createdAt": "2022-10-14T11:24:26.880+00:00",
+            "$updatedAt": "2022-10-14T11:24:39.876+00:00",
+            "$permissions": [],
+            "databaseId": "dubstep-stack-db",
+            "name": "notes",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "title",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null
+                },
+                {
+                    "key": "body",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 65535,
+                    "default": null
+                },
+                {
+                    "key": "profile_id",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 16,
+                    "default": null
+                }
+            ],
+            "indexes": []
+        }
+    ]
+}

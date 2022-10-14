@@ -1,14 +1,11 @@
-import type {
-  ActionFunction,
-  LoaderArgs,
-  MetaFunction,
-} from "@remix-run/node";
+import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { createUserSession, getUserId } from "~/session.server";
 import { createUser, getProfileByEmail } from "~/models/user.server";
 import { validateEmail } from "~/utils";
 import * as React from "react";
+import { AppwriteException } from "node-appwrite";
 
 export const meta: MetaFunction = () => {
   return {
@@ -27,7 +24,7 @@ export async function loader({ request }: LoaderArgs) {
   const userId = await getUserId(request);
   if (userId) return redirect("/");
   return json({});
-};
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
@@ -58,25 +55,41 @@ export const action: ActionFunction = async ({ request }) => {
       { status: 400 }
     );
   }
+  try {
+    // A user could potentially already exist within our system
+    // and we should communicate that well
+    const existingUser = await getProfileByEmail(email);
+    if (existingUser) {
+      return json<ActionData>(
+        { errors: { email: "A user already exists with this email." } },
+        { status: 400 }
+      );
+    }
 
-  // A user could potentially already exist within our system
-  // and we should communicate that well
-  const existingUser = await getProfileByEmail(email);
-  if (existingUser) {
+    const user = await createUser(email, password);
+    if (!user?.id) {
+      return json<ActionData>(
+        { errors: { email: `User not found for ${email}` } },
+        { status: 400 }
+      );
+    }
+
+    return createUserSession({
+      request,
+      userId: user.id,
+      remember: false,
+      redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
+    });
+  } catch (error) {
+    let message = "Unknown Error";
+    if (error instanceof AppwriteException)
+      message =
+        error?.response?.message != null ? error.response.message : message;
     return json<ActionData>(
-      { errors: { email: "A user already exists with this email." } },
+      { errors: { email: `${message}` } },
       { status: 400 }
     );
   }
-
-  const user = await createUser(email, password);
-
-  return createUserSession({
-    request,
-    userId: user.id,
-    remember: false,
-    redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
-  });
 };
 
 export default function Join() {
@@ -98,8 +111,8 @@ export default function Join() {
   }, [actionData]);
 
   return (
-    <div className="flex min-h-full flex-col justify-center">
-      <div className="mx-auto w-full max-w-md px-8">
+    <div className="flex flex-col justify-center min-h-full">
+      <div className="w-full max-w-md px-8 mx-auto">
         <Form className="space-y-6" method="post" noValidate>
           <div>
             <label className="text-sm font-medium" htmlFor="email">
@@ -111,7 +124,7 @@ export default function Join() {
               )}
             </label>
             <input
-              className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+              className="w-full px-2 py-1 text-lg border border-gray-500 rounded"
               type="email"
               name="email"
               id="email"
@@ -137,7 +150,7 @@ export default function Join() {
               id="password"
               type="password"
               name="password"
-              className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
+              className="w-full px-2 py-1 text-lg border border-gray-500 rounded"
               autoComplete="new-password"
               aria-invalid={actionData?.errors?.password ? true : undefined}
               aria-describedby="password-error"
@@ -145,14 +158,14 @@ export default function Join() {
             />
           </div>
           <button
-            className="w-full rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
+            className="w-full px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 focus:bg-blue-400"
             type="submit"
           >
             Create Account
           </button>
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div className="flex items-center justify-center">
-            <div className="text-center text-sm text-gray-500">
+            <div className="text-sm text-center text-gray-500">
               Already have an account?{" "}
               <Link
                 className="text-blue-500 underline"
