@@ -1,5 +1,5 @@
 import invariant from "tiny-invariant";
-import { Client, Users, Databases } from "node-appwrite";
+import { Client, Account, Databases } from "appwrite";
 
 // Abstract this away
 const appwriteEndpoint = process.env.APPWRITE_ENDPOINT as string;
@@ -24,8 +24,7 @@ invariant(appwriteDb, "APPWRITE_DB must be set in your environment variables.");
 
 export const client = new Client()
   .setEndpoint(appwriteEndpoint)
-  .setProject(appwriteProject)
-  .setKey(appwriteKey);
+  .setProject(appwriteProject);
 
-export const users = new Users(client);
+export const account = new Account(client);
 export const databases = new Databases(client);

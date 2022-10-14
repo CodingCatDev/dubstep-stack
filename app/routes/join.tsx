@@ -2,10 +2,9 @@ import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { createUserSession, getUserId } from "~/session.server";
-import { createUser, getProfileByEmail } from "~/models/user.server";
+import { createUser } from "~/models/user.server";
 import { validateEmail } from "~/utils";
 import * as React from "react";
-import { AppwriteException } from "node-appwrite";
 
 export const meta: MetaFunction = () => {
   return {
@@ -56,35 +55,19 @@ export const action: ActionFunction = async ({ request }) => {
     );
   }
   try {
-    // A user could potentially already exist within our system
-    // and we should communicate that well
-    const existingUser = await getProfileByEmail(email);
-    if (existingUser) {
-      return json<ActionData>(
-        { errors: { email: "A user already exists with this email." } },
-        { status: 400 }
-      );
-    }
-
     const user = await createUser(email, password);
-    if (!user?.id) {
-      return json<ActionData>(
-        { errors: { email: `User not found for ${email}` } },
-        { status: 400 }
-      );
-    }
-
     return createUserSession({
       request,
-      userId: user.id,
-      remember: false,
+      userId: user.$id,
+      remember: true,
       redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
     });
   } catch (error) {
     let message = "Unknown Error";
-    if (error instanceof AppwriteException)
-      message =
-        error?.response?.message != null ? error.response.message : message;
+    if (error) { //TODO: instanceof AppwriteException bug being fixed
+      const e = error as any;
+      message = e?.response?.message != null ? e?.response?.message : message;
+    }
     return json<ActionData>(
       { errors: { email: `${message}` } },
       { status: 400 }

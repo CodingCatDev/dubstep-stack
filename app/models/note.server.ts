@@ -1,5 +1,5 @@
-import type { Models } from "node-appwrite";
-import { Query, ID } from "node-appwrite";
+import type { Models } from "appwrite";
+import { Query, ID } from "appwrite";
 import type { User } from "./user.server";
 import { databases, appwriteDb } from "./config.server";
 
