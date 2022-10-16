@@ -1,13 +1,10 @@
 import React from "react";
-import type {
-  ActionFunction,
-  LoaderArgs,
-  MetaFunction,
-} from "@remix-run/node";
+import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
-import { createUserSession, getUserId } from "~/session.server";
+import { getUserId } from "~/session.server";
 import { validateEmail } from "~/utils";
+import { createEmailSession } from "~/models/user.server";
 
 export const meta: MetaFunction = () => {
   return {
@@ -26,14 +23,13 @@ export async function loader({ request }: LoaderArgs) {
   const userId = await getUserId(request);
   if (userId) return redirect("/");
   return json({});
-};
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get("email");
   const password = formData.get("password");
   const redirectTo = formData.get("redirectTo");
-  const remember = formData.get("remember");
 
   if (!validateEmail(email)) {
     return json({ errors: { email: "Email is invalid." } }, { status: 400 });
@@ -53,20 +49,18 @@ export const action: ActionFunction = async ({ request }) => {
     );
   }
 
-  const user = await verifyLogin(email, password);
+  const resp = await createEmailSession(email, password);
 
-  if (!user) {
+  if (!resp?.data?.$id) {
     return json(
       { errors: { email: "Invalid email or password" } },
       { status: 400 }
     );
   }
 
-  return createUserSession({
-    request,
-    userId: user.id,
-    remember: remember === "on" ? true : false,
-    redirectTo: typeof redirectTo === "string" ? redirectTo : "/notes",
+  const { response } = resp;
+  return redirect(typeof redirectTo === "string" ? redirectTo : "/notes", {
+    headers: response.headers,
   });
 };
 
@@ -143,20 +137,7 @@ export default function Login() {
           </button>
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                id="remember"
-                name="remember"
-                type="checkbox"
-              />
-              <label
-                className="block ml-2 text-sm text-gray-900"
-                htmlFor="remember"
-              >
-                Remember me
-              </label>
-            </div>
+
             <div className="text-sm text-center text-gray-500">
               Don't have an account?{" "}
               <Link

@@ -1,7 +1,7 @@
 import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
-import { createUserSession, getUserId } from "~/session.server";
+import { getUserId } from "~/session.server";
 import { createUser } from "~/models/user.server";
 import { validateEmail } from "~/utils";
 import * as React from "react";
@@ -56,12 +56,12 @@ export const action: ActionFunction = async ({ request }) => {
   }
   try {
     const user = await createUser(email, password);
-    return createUserSession({
-      request,
-      userId: user.$id,
-      remember: true,
-      redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
-    });
+    // return createUserSession({
+    //   request,
+    //   userId: user.$id,
+    //   remember: true,
+    //   redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
+    // });
   } catch (error) {
     let message = "Unknown Error";
     if (error) { //TODO: instanceof AppwriteException bug being fixed
