@@ -56,12 +56,6 @@ export const action: ActionFunction = async ({ request }) => {
   }
   try {
     const user = await createUser(email, password);
-    // return createUserSession({
-    //   request,
-    //   userId: user.$id,
-    //   remember: true,
-    //   redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
-    // });
   } catch (error) {
     let message = "Unknown Error";
     if (error) { //TODO: instanceof AppwriteException bug being fixed
