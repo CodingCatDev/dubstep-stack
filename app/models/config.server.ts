@@ -28,10 +28,6 @@ export const databases = new Databases(client);
  * this should be set so that client can setJWT to pass.
  */
 
-export type Headers = {
-  [key: string]: string;
-};
-
 export type Payload = {
   [key: string]: any;
 };
@@ -39,9 +35,9 @@ export type Payload = {
 export async function call(
   method: string,
   url: URL,
-  headers: Headers = {},
+  headers: Headers = new Headers(),
   params: Payload = {}
-): Promise<any> {
+): Promise<{data: any, response: Response}> {
   method = method.toUpperCase();
 
   headers = Object.assign(
@@ -64,8 +60,7 @@ export async function call(
   };
 
   if (typeof window !== "undefined" && window.localStorage) {
-    headers["X-Fallback-Cookies"] =
-      window.localStorage.getItem("cookieFallback") ?? "";
+    headers.set("X-Fallback-Cookies", window.localStorage.getItem("cookieFallback") ?? "");
   }
 
   if (method === "GET") {
@@ -73,7 +68,7 @@ export async function call(
       url.searchParams.append(key, value);
     }
   } else {
-    switch (headers["content-type"]) {
+    switch (headers.get("content-type")) {
       case "application/json":
         options.body = JSON.stringify(params);
         break;
@@ -92,7 +87,7 @@ export async function call(
         }
 
         options.body = formData;
-        delete headers["content-type"];
+        headers.delete("content-type");
         break;
     }
   }
