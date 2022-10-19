@@ -4,7 +4,7 @@ import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { getUserId } from "~/session.server";
 import { validateEmail } from "~/utils";
-import { createEmailSession } from "~/models/user.server";
+import { createEmailSession, createJWT } from "~/models/user.server";
 
 export const meta: MetaFunction = () => {
   return {
@@ -51,15 +51,18 @@ export const action: ActionFunction = async ({ request }) => {
 
   const resp = await createEmailSession(email, password);
 
-  if (!resp?.data?.$id) {
+  const fallbackCookies = resp.response.headers.get("x-fallback-cookies");
+
+  if (!fallbackCookies) {
     return json(
-      { errors: { email: "Invalid email or password" } },
+      { errors: { email: "Fallback Cookie not found." } },
       { status: 400 }
     );
   }
 
+  //Pass back set-cookie from Appwrite server.
   const { response } = resp;
-  return redirect(typeof redirectTo === "string" ? redirectTo : "/notes", {
+  return redirect("/notes", {
     headers: response.headers,
   });
 };
@@ -137,7 +140,6 @@ export default function Login() {
           </button>
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div className="flex items-center justify-between">
-
             <div className="text-sm text-center text-gray-500">
               Don't have an account?{" "}
               <Link

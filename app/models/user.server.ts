@@ -33,10 +33,10 @@ export async function getProfileById(id: string) {
  * @throws {AppwriteException}
  * @returns {Promise}
  */
- export async function createEmailSession(
+export async function createEmailSession(
   email: string,
   password: string
-): Promise<{response: Response, data:Models.Session}> {
+): Promise<{ response: Response; data: Models.Session }> {
   if (typeof email === "undefined") {
     throw new AppwriteException('Missing required parameter: "email"');
   }
@@ -62,6 +62,62 @@ export async function getProfileById(id: string) {
     uri,
     {
       "content-type": "application/json",
+    },
+    payload
+  );
+}
+
+/**
+ * Create Account JWT
+ *
+ * Use this endpoint to create a JSON Web Token. You can use the resulting JWT
+ * to authenticate on behalf of the current user when working with the
+ * Appwrite server-side API and SDKs. The JWT secret is valid for 15 minutes
+ * from its creation and will be invalid if the user will logout in that time
+ * frame.
+ *
+ * @throws {AppwriteException}
+ * @returns {Promise}
+ */
+export async function createJWT(
+  fallbackCookies: string
+): Promise<{ response: Response; data: Models.Jwt }> {
+  let path = "/account/jwt";
+  let payload: Payload = {};
+
+  const uri = new URL(appwriteEndpoint + path);
+  return await call(
+    "post",
+    uri,
+    {
+      "content-type": "application/json",
+      "x-fallback-cookies": fallbackCookies,
+    },
+    payload
+  );
+}
+
+/**
+ * Get Account
+ *
+ * Get currently logged in user data as JSON object.
+ *
+ * @throws {AppwriteException}
+ * @returns {Promise}
+ */
+export async function getAccount<Preferences extends Models.Preferences>(
+  headers: Headers
+): Promise<Models.Account<Preferences>> {
+  let path = "/account";
+  let payload: Payload = {};
+
+  const uri = new URL(appwriteEndpoint + path);
+  return await call(
+    "get",
+    uri,
+    {
+      "content-type": "application/json",
+      "x-fallback-cookies": fallbackCookies,
     },
     payload
   );
