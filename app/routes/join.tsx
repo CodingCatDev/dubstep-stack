@@ -2,7 +2,7 @@ import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { getUserId } from "~/session.server";
-import { createUser } from "~/models/user.server";
+import { createEmailSession, createUser } from "~/models/user.server";
 import { validateEmail } from "~/utils";
 import * as React from "react";
 
@@ -55,10 +55,26 @@ export const action: ActionFunction = async ({ request }) => {
     );
   }
   try {
-    const user = await createUser(email, password);
+    await createUser(email, password);
+    const resp = await createEmailSession(email, password);
+    const fallbackCookies = resp.response.headers.get("x-fallback-cookies");
+
+    if (!fallbackCookies) {
+      return json(
+        { errors: { email: "Fallback Cookie not found." } },
+        { status: 400 }
+      );
+    }
+
+    //Pass back set-cookie from Appwrite server.
+    const { response } = resp;
+    return redirect("/notes", {
+      headers: response.headers,
+    });
   } catch (error) {
     let message = "Unknown Error";
-    if (error) { //TODO: instanceof AppwriteException bug being fixed
+    if (error) {
+      //TODO: instanceof AppwriteException bug being fixed
       const e = error as any;
       message = e?.response?.message != null ? e?.response?.message : message;
     }

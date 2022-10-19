@@ -1,21 +1,20 @@
 import { redirect } from "@remix-run/node";
-import { getProfileById } from "./models/user.server";
-
+import { getAccount, getProfileById } from "./models/user.server";
 
 export async function getUserId(request: Request) {
-  const userId = request.headers.get("Cookie")
-  return null
+  const fallbackCookie = request.headers.get("cookie")?.split("=")?.at(1);
+  const session = await getAccount(fallbackCookie || "");
+  return undefined;
 }
 
 export async function getUser(request: Request) {
-  const userId =  await getUserId(request);
-  console.log(userId)
-  return null
+  const userId = await getUserId(request);
+  if (userId === undefined) return null;
 
-  // const user = await getProfileById(userId);
-  // if (user) return user;
+  const user = await getProfileById(userId);
+  if (user) return user;
 
-  // throw await logout(request);
+  throw await logout(request);
 }
 
 /**
@@ -47,12 +46,10 @@ export async function requireUser(request: Request) {
 }
 
 export async function logout(request: Request) {
-  // const session = await getSession(request);
-  return redirect("/", 
-  // {
-    // headers: {
-    //   "Set-Cookie": await sessionStorage.destroySession(session),
-    // },
-  // }
-  );
+  const session = await getSession(request);
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": "",
+    },
+  });
 }
