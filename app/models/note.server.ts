@@ -1,7 +1,7 @@
 import type { Models } from "appwrite";
 import { Query, ID } from "appwrite";
 import type { User } from "./user.server";
-import { databases, appwriteDb } from "./config.server";
+import { databases, appwriteDb } from "./appwrite.server";
 
 export interface Note extends Models.Document {
   id: string;

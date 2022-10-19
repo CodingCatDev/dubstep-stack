@@ -35,23 +35,19 @@ export type Payload = {
 export async function call(
   method: string,
   url: URL,
-  headers: Headers = new Headers(),
+  inputHeaders: Headers = new Headers(),
   params: Payload = {}
-): Promise<{data: any, response: Response}> {
+): Promise<{ data: any; response: Response }> {
   method = method.toUpperCase();
 
-  headers = Object.assign(
-    {},
-    {
-      "X-Appwrite-Project": appwriteProject,
-      "x-sdk-name": "Web",
-      "x-sdk-platform": "client",
-      "x-sdk-language": "web",
-      "x-sdk-version": "10.1.0",
-      "X-Appwrite-Response-Format": "1.0.0",
-    },
-    headers
-  );
+  const headers = new Headers();
+  headers.set("content-type", inputHeaders.get("content-type") || '');
+  headers.set("X-Appwrite-Project", appwriteProject);
+  headers.set("x-sdk-name", "Web");
+  headers.set("x-sdk-platform", "client");
+  headers.set("x-sdk-language", "web");
+  headers.set("x-sdk-version", "10.1.0");
+  headers.set("X-Appwrite-Response-Format", "1.0.0");
 
   let options: RequestInit = {
     method,
@@ -59,8 +55,15 @@ export async function call(
     credentials: "include",
   };
 
-  if (typeof window !== "undefined" && window.localStorage) {
-    headers.set("X-Fallback-Cookies", window.localStorage.getItem("cookieFallback") ?? "");
+  const cookies = inputHeaders.get("cookie") || undefined;
+  const cookieFallback = getCookieValue({
+    cookies,
+    name: `a_session_${appwriteProject}_legacy`,
+  });
+
+  if (cookieFallback) {
+    headers.set("X-Fallback-Cookies", cookieFallback);
+    headers.set("cookie", inputHeaders.get("cookie") || "");
   }
 
   if (method === "GET") {
@@ -112,19 +115,6 @@ export async function call(
         data
       );
     }
-
-    const cookieFallback = response.headers.get("X-Fallback-Cookies");
-
-    if (
-      typeof window !== "undefined" &&
-      window.localStorage &&
-      cookieFallback
-    ) {
-      window.console.warn(
-        "Appwrite is using localStorage for session management. Increase your security by adding a custom domain as your API endpoint."
-      );
-      window.localStorage.setItem("cookieFallback", cookieFallback);
-    }
     return { response, data };
   } catch (e) {
     if (e instanceof AppwriteException) {
@@ -150,3 +140,13 @@ export function flatten(data: Payload, prefix = ""): Payload {
 
   return output;
 }
+export const getCookieValue = ({
+  cookies,
+  name,
+}: {
+  cookies?: string;
+  name: string;
+}) =>
+  !cookies
+    ? undefined
+    : cookies.match("(^|;)\\s*" + name + "\\s*=\\s*([^;]+)")?.pop() || "";

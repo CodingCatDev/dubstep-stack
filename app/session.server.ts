@@ -1,20 +1,23 @@
+import { appwriteProject, getCookieValue } from "./models/appwrite.server";
 import { redirect } from "@remix-run/node";
-import { getAccount, getProfileById } from "./models/user.server";
+import { getAccount } from "./models/user.server";
 
 export async function getUserId(request: Request) {
-  const fallbackCookie = request.headers.get("cookie")?.split("=")?.at(1);
-  const session = await getAccount(fallbackCookie || "");
+  //Check to make sure cookie exists to avoid unnecessary API call
+  const cookies = request.headers.get("cookie") || undefined;
+  const cookie = getCookieValue({cookies, name:`a_session_${appwriteProject}_legacy`});
+  if (cookie) {
+    const accountResp = await getAccount(request.headers);
+    const { data } = accountResp;
+    return data?.$id;
+  }
   return undefined;
 }
 
 export async function getUser(request: Request) {
   const userId = await getUserId(request);
   if (userId === undefined) return null;
-
-  const user = await getProfileById(userId);
-  if (user) return user;
-
-  throw await logout(request);
+  return userId;
 }
 
 /**
@@ -39,14 +42,10 @@ export async function requireUser(request: Request) {
   const userId = await requireUserId(request);
   if (userId == undefined) return null;
 
-  const profile = await getProfileById(userId);
-  if (profile) return profile;
-
   throw await logout(request);
 }
 
 export async function logout(request: Request) {
-  const session = await getSession(request);
   return redirect("/", {
     headers: {
       "Set-Cookie": "",

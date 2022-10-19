@@ -61,7 +61,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     if (!fallbackCookies) {
       return json(
-        { errors: { email: "Fallback Cookie not found." } },
+        { errors: { email: "User Cookie could not be set." } },
         { status: 400 }
       );
     }

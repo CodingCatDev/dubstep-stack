@@ -4,7 +4,7 @@ import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { getUserId } from "~/session.server";
 import { validateEmail } from "~/utils";
-import { createEmailSession, createJWT } from "~/models/user.server";
+import { createEmailSession } from "~/models/user.server";
 
 export const meta: MetaFunction = () => {
   return {
@@ -55,7 +55,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (!fallbackCookies) {
     return json(
-      { errors: { email: "Fallback Cookie not found." } },
+      { errors: { email: "User Cookie could not be set." } },
       { status: 400 }
     );
   }

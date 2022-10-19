@@ -1,23 +1,13 @@
 import type { Models } from "appwrite";
 import { ID, AppwriteException } from "appwrite";
-import type { Payload } from "./config.server";
-import { account, appwriteEndpoint, call } from "./config.server";
+import type { Payload } from "./appwrite.server";
+import { account, appwriteEndpoint, call } from "./appwrite.server";
 
 export interface User extends Models.Account<Models.Preferences> {}
 
 export async function createUser(email: string, password: string) {
   const user = await account.create(ID.unique(), email, password);
   return user;
-}
-
-export async function getProfileById(id: string) {
-  try {
-    const data = await account.getPrefs();
-    return data;
-  } catch (error) {
-    console.error(error);
-    if (error) return null;
-  }
 }
 
 /** Below copied from Appwrite, and modified for serverside */
