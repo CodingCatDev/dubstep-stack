@@ -5,9 +5,9 @@ import { createNote } from "~/models/note.server";
 import { requireUserId } from "~/session.server";
 
 export const action: ActionFunction = async ({ request }) => {
+  const formData = await request.formData();
   const userId = await requireUserId(request);
 
-  const formData = await request.formData();
   const title = formData.get("title");
   const body = formData.get("body");
 
@@ -19,8 +19,13 @@ export const action: ActionFunction = async ({ request }) => {
     return json({ errors: { body: "Body is required" } }, { status: 400 });
   }
 
-  const note = await createNote({ title, body, userId });
-  return redirect(`/notes/${note.id}`);
+  const note = await createNote({
+    title,
+    body,
+    userId,
+    headers: request.headers,
+  });
+  return redirect(`/notes/${note?.$id}`);
 };
 
 export default function NewNotePage() {
@@ -35,21 +40,21 @@ export default function NewNotePage() {
       }}
     >
       <div>
-        <label className="flex w-full flex-col gap-1">
+        <label className="flex flex-col w-full gap-1">
           <span>Title: </span>
           <input
             name="title"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            className="flex-1 px-3 text-lg leading-loose border-2 border-blue-500 rounded-md"
           />
         </label>
       </div>
       <div>
-        <label className="flex w-full flex-col gap-1">
+        <label className="flex flex-col w-full gap-1">
           <span>Body: </span>
           <textarea
             name="body"
             rows={8}
-            className="w-full flex-1 rounded-md border-2 border-blue-500 py-2 px-3 text-lg leading-6"
+            className="flex-1 w-full px-3 py-2 text-lg leading-6 border-2 border-blue-500 rounded-md"
           ></textarea>
         </label>
       </div>
@@ -57,7 +62,7 @@ export default function NewNotePage() {
       <div className="text-right">
         <button
           type="submit"
-          className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
+          className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 focus:bg-blue-400"
         >
           Save
         </button>

@@ -2,9 +2,9 @@ import React from "react";
 import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
-import { getUserId } from "~/session.server";
+import { getUser } from "~/session.server";
 import { validateEmail } from "~/utils";
-import { createEmailSession } from "~/models/user.server";
+import { createEmailSession } from "~/models/account.server";
 
 export const meta: MetaFunction = () => {
   return {
@@ -20,8 +20,8 @@ interface ActionData {
 }
 
 export async function loader({ request }: LoaderArgs) {
-  const userId = await getUserId(request);
-  if (userId) return redirect("/");
+  const user = await getUser(request);
+  if (user?.$id) return redirect("/");
   return json({});
 }
 
@@ -62,7 +62,8 @@ export const action: ActionFunction = async ({ request }) => {
 
   //Pass back set-cookie from Appwrite server.
   const { response } = resp;
-  return redirect("/notes", {
+
+  return redirect(typeof redirectTo === "string" ? redirectTo : "/notes", {
     headers: response.headers,
   });
 };

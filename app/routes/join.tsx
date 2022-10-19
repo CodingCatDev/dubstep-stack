@@ -1,8 +1,8 @@
 import type { ActionFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
-import { getUserId } from "~/session.server";
-import { createEmailSession, createUser } from "~/models/user.server";
+import { getUser } from "~/session.server";
+import { createEmailSession, createUser } from "~/models/account.server";
 import { validateEmail } from "~/utils";
 import * as React from "react";
 
@@ -20,8 +20,8 @@ interface ActionData {
 }
 
 export async function loader({ request }: LoaderArgs) {
-  const userId = await getUserId(request);
-  if (userId) return redirect("/");
+  const user = await getUser(request);
+  if (user?.$id) return redirect("/");
   return json({});
 }
 
@@ -29,7 +29,6 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get("email");
   const password = formData.get("password");
-  const redirectTo = formData.get("redirectTo");
 
   // Ensure the email is valid
   if (!validateEmail(email)) {

@@ -14,7 +14,7 @@ export async function loader({ request, params }: LoaderArgs) {
   const userId = await requireUserId(request);
   invariant(params.noteId, "noteId not found");
 
-  const note = await getNote({ userId, id: params.noteId });
+  const note = await getNote({ userId, id: params.noteId, headers:request.headers });
   if (!note) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -26,7 +26,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   const userId = await requireUserId(request);
   invariant(params.noteId, "noteId not found");
 
-  await deleteNote({ userId, id: params.noteId });
+  await deleteNote({ userId, id: params.noteId,headers:request.headers });
 
   return redirect("/notes");
 };
@@ -42,7 +42,7 @@ export default function NoteDetailsPage() {
       <Form method="post">
         <button
           type="submit"
-          className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
+          className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 focus:bg-blue-400"
         >
           Delete
         </button>

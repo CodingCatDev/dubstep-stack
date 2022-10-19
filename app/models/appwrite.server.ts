@@ -16,12 +16,12 @@ invariant(
 );
 invariant(appwriteDb, "APPWRITE_DB must be set in your environment variables.");
 
-export const client = new Client()
-  .setEndpoint(appwriteEndpoint)
-  .setProject(appwriteProject);
+// export const client = new Client()
+//   .setEndpoint(appwriteEndpoint)
+//   .setProject(appwriteProject);
 
-export const account = new Account(client);
-export const databases = new Databases(client);
+// export const account = new Account(client);
+// export const databases = new Databases(client);
 
 /** Below copied from APPWRITE changed to return full API call
  * so that the Set-Cookie can be extracted for servside

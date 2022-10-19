@@ -99,7 +99,7 @@ Note: When running the Netlify CLI, file changes will rebuild assets, but you wi
 
 This is a pretty simple note-taking app, but it's a good example of how you can build a full stack app with Remix and Supabase. The main functionality is creating users, logging in and out, and creating and deleting notes.
 
-- creating users, and logging in and out [./app/models/user.server.ts](./app/models/user.server.ts)
+- creating users, and logging in and out [./app/models/account.server.ts](./app/models/account.server.ts)
 - user sessions, and verifying them [./app/session.server.ts](./app/session.server.ts)
 - creating, and deleting notes [./app/models/note.server.ts](./app/models/note.server.ts)
 

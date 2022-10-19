@@ -1,22 +1,38 @@
 import type { Models } from "appwrite";
 import { Query, ID } from "appwrite";
-import type { User } from "./user.server";
-import { databases, appwriteDb } from "./appwrite.server";
+import type { User } from "./account.server";
+import { appwriteDb } from "./appwrite.server";
+import {
+  createDocument,
+  deleteDocument,
+  listDocuments,
+} from "./databases.server";
 
 export interface Note extends Models.Document {
+  userId: string;
   id: string;
   title: string;
   body: string;
-  profile_id: string;
 }
 
-export async function getNoteListItems({ userId }: { userId: User["id"] }) {
+export async function getNoteListItems({
+  userId,
+  headers,
+}: {
+  userId: User["$id"];
+  headers: Headers;
+}) {
   try {
-    const data = await databases.listDocuments(appwriteDb, "notes", [
-      Query.equal("profile_id", userId),
-    ]);
+    const { data } = await listDocuments(
+      appwriteDb,
+      "notes",
+      [Query.equal("profile_id", userId)],
+      headers
+    );
     return data.documents as Note[] | [];
   } catch (error) {
+    console.error(error);
+
     if (error) return [];
   }
 }
@@ -25,9 +41,10 @@ export async function createNote({
   title,
   body,
   userId,
-}: Pick<Note, "body" | "title"> & { userId: User["id"] }) {
+  headers,
+}: Pick<Note, "body" | "title"> & { userId: User["$id"]; headers: Headers }) {
   try {
-    const data = await databases.createDocument(
+    const { data } = await createDocument(
       appwriteDb,
       "notes",
       ID.unique(),
@@ -35,10 +52,14 @@ export async function createNote({
         title,
         body,
         profile_id: userId,
-      }
+      },
+      undefined,
+      headers
     );
     return data as Note;
   } catch (error) {
+    console.error(error);
+
     if (error) return null;
   }
 }
@@ -46,14 +67,22 @@ export async function createNote({
 export async function deleteNote({
   id,
   userId,
-}: Pick<Note, "id"> & { userId: User["id"] }) {
+  headers,
+}: Pick<Note, "id"> & { userId: User["$id"]; headers: Headers }) {
   try {
-    const note = await getNote({ id, userId });
+    const note = await getNote({ id, userId, headers });
     if (!note) return null;
 
-    const res = await databases.deleteDocument(appwriteDb, "notes", note.id);
-    return res.status === 204 ? {} : null;
+    const { response } = await deleteDocument(
+      appwriteDb,
+      "notes",
+      note.id,
+      headers
+    );
+    return response.status === 204 ? {} : null;
   } catch (error) {
+    console.error(error);
+
     if (error) return null;
   }
   return null;
@@ -62,14 +91,17 @@ export async function deleteNote({
 export async function getNote({
   id,
   userId,
-}: Pick<Note, "id"> & { userId: User["id"] }) {
+  headers,
+}: Pick<Note, "id"> & { userId: User["$id"]; headers: Headers }) {
   try {
-    const data = await databases.listDocuments(appwriteDb, "notes", [
-      Query.equal("$id", id),
-      Query.equal("profile_id", userId),
-    ]);
+    const { data } = await listDocuments(
+      appwriteDb,
+      "notes",
+      [Query.equal("$id", id), Query.equal("profile_id", userId)],
+      headers
+    );
     if (data?.documents && data?.total > 0) {
-      const doc = data?.documents?.at(1) as Note;
+      const doc = data?.documents?.at(0) as Note;
       return {
         userId: doc.profile_id,
         id: doc.$id,
@@ -79,6 +111,7 @@ export async function getNote({
     }
     return null;
   } catch (error) {
+    console.error(error);
     if (error) return null;
   }
   return null;

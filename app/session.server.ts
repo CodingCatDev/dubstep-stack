@@ -1,23 +1,20 @@
 import { appwriteProject, getCookieValue } from "./models/appwrite.server";
 import { redirect } from "@remix-run/node";
-import { getAccount } from "./models/user.server";
+import { deleteSession, getAccount } from "./models/account.server";
 
-export async function getUserId(request: Request) {
+export async function getUser(request: Request) {
   //Check to make sure cookie exists to avoid unnecessary API call
   const cookies = request.headers.get("cookie") || undefined;
-  const cookie = getCookieValue({cookies, name:`a_session_${appwriteProject}_legacy`});
+  const cookie = getCookieValue({
+    cookies,
+    name: `a_session_${appwriteProject}_legacy`,
+  });
   if (cookie) {
     const accountResp = await getAccount(request.headers);
     const { data } = accountResp;
-    return data?.$id;
+    return data ? data: null;
   }
-  return undefined;
-}
-
-export async function getUser(request: Request) {
-  const userId = await getUserId(request);
-  if (userId === undefined) return null;
-  return userId;
+  return null;
 }
 
 /**
@@ -29,13 +26,13 @@ export async function requireUserId(
   request: Request,
   redirectTo: string = new URL(request.url).pathname
 ) {
-  const userId = await getUserId(request);
-  if (!userId) {
+  const user = await getUser(request);
+  if (!user?.$id) {
     const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
     throw redirect(`/login?${searchParams}`);
   }
 
-  return userId;
+  return user?.$id;
 }
 
 export async function requireUser(request: Request) {
@@ -46,9 +43,8 @@ export async function requireUser(request: Request) {
 }
 
 export async function logout(request: Request) {
+  const {response} = await deleteSession("current", request.headers);
   return redirect("/", {
-    headers: {
-      "Set-Cookie": "",
-    },
+    headers: response.headers
   });
 }
